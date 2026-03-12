@@ -1,6 +1,17 @@
 <template>
   <a-layout-footer class="footer">
-    智能应用自动化构建平台
+    <div class="footer-content">
+      <p class="copyright">
+        <a
+          href="https://www.codefather.cn"
+          target="_blank"
+          rel="noopener noreferrer"
+          class="author-link"
+        >
+          编程导航原创项目 by 程序员鱼皮
+        </a>
+      </p>
+    </div>
   </a-layout-footer>
 </template>
 
@@ -10,10 +21,17 @@
 
 <style scoped>
 .footer {
-  background: #fff;
+  background: rgba(255, 255, 255, 0.8);
+  backdrop-filter: blur(10px);
   text-align: center;
-  padding: 16px 24px;
-  border-top: 1px solid rgba(0, 0, 0, 0.06);
-  color: rgba(0, 0, 0, 0.65);
+  padding: 20px;
+  margin-top: 40px;
+  border-top: 1px solid rgba(102, 126, 234, 0.1);
+}
+
+.copyright {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
 }
 </style>

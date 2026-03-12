@@ -132,15 +132,11 @@ const doSearch = () => {
 }
 
 // 删除数据
-const doDelete = async (id: number | string) => {
+const doDelete = async (id: string) => {
   if (!id) {
     return
   }
-  const userId = typeof id === 'string' ? Number(id) : id
-  if (!userId) {
-    return
-  }
-  const res = await deleteUser({ id: userId })
+  const res = await deleteUser({ id })
   if (res.data.code === 0) {
     message.success('删除成功')
     // 刷新数据
