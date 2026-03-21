@@ -2,13 +2,39 @@ package com.jzy.aicodeplatform.service;
 
 import com.jzy.aicodeplatform.model.dto.app.AppQueryRequest;
 import com.jzy.aicodeplatform.model.entity.App;
+import com.jzy.aicodeplatform.model.entity.User;
 import com.jzy.aicodeplatform.model.vo.AppVO;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.core.service.IService;
+import reactor.core.publisher.Flux;
 
 import java.util.List;
 
+/**
+ *  服务层。
+ *
+ * @author ai
+ */
 public interface AppService extends IService<App> {
+
+
+
+    /**
+     * 通过对话生成应用代码
+     * @param appId 应用id
+     * @param userMessage  提示词
+     * @param loginUser 登录用户
+     * @return
+     */
+    Flux<String> chatToGenCode(Long appId, String userMessage, User loginUser);
+
+    /**
+     * 应用部署
+     * @param appId
+     * @param loginUser
+     * @return 可访问的部署地址
+     */
+    String deployApp(Long appId,User loginUser);
 
     /**
      * 获取应用封装类
@@ -34,7 +60,7 @@ public interface AppService extends IService<App> {
      */
     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
 
-}
 
+}
 
 

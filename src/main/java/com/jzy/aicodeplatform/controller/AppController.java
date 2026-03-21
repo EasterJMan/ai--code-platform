@@ -2,6 +2,7 @@ package com.jzy.aicodeplatform.controller;
 
 import cn.hutool.core.bean.BeanUtil;
 import cn.hutool.core.util.StrUtil;
+import cn.hutool.json.JSONUtil;
 import com.jzy.aicodeplatform.annotation.AuthCheck;
 import com.jzy.aicodeplatform.common.BaseResponse;
 import com.jzy.aicodeplatform.common.DeleteRequest;
@@ -11,10 +12,7 @@ import com.jzy.aicodeplatform.constant.UserConstant;
 import com.jzy.aicodeplatform.exception.BusinessException;
 import com.jzy.aicodeplatform.exception.ErrorCode;
 import com.jzy.aicodeplatform.exception.ThrowUtils;
-import com.jzy.aicodeplatform.model.dto.app.AppAddRequest;
-import com.jzy.aicodeplatform.model.dto.app.AppAdminUpdateRequest;
-import com.jzy.aicodeplatform.model.dto.app.AppQueryRequest;
-import com.jzy.aicodeplatform.model.dto.app.AppUpdateRequest;
+import com.jzy.aicodeplatform.model.dto.app.*;
 import com.jzy.aicodeplatform.model.entity.App;
 import com.jzy.aicodeplatform.model.entity.User;
 import com.jzy.aicodeplatform.model.enums.CodeGenTypeEnum;
@@ -25,14 +23,15 @@ import com.mybatisflex.core.paginate.Page;
 import com.mybatisflex.core.query.QueryWrapper;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.http.MediaType;
+import org.springframework.http.codec.ServerSentEvent;
+import org.springframework.web.bind.annotation.*;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
 
 /**
  *  应用控制层。
@@ -142,7 +141,7 @@ public class AppController {
      * 根据 id 查看应用详情
      */
     @GetMapping("/get/vo")
-    public BaseResponse<AppVO> getAppById(Long id, HttpServletRequest request) {
+    public BaseResponse<AppVO> getAppById(Long id) {
         ThrowUtils.throwIf(id == null || id <= 0, ErrorCode.PARAMS_ERROR);
         App app = appService.getById(id);
         ThrowUtils.throwIf(app == null, ErrorCode.NOT_FOUND_ERROR);
@@ -291,5 +290,45 @@ public class AppController {
     }
 
     // endregion
+
+    @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
+                                                       @RequestParam String message,
+                                                       HttpServletRequest request) {
+        // 参数校验
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
+        ThrowUtils.throwIf(StrUtil.isBlank(message), ErrorCode.PARAMS_ERROR, "用户消息不能为空");
+        // 获取当前登录用户
+        User loginUser = userService.getLoginUser(request);
+        // 调用服务生成代码（流式）
+        Flux<String> contentFlux = appService.chatToGenCode(appId, message, loginUser);
+        // 转换为 ServerSentEvent 格式
+        return contentFlux
+                .map(chunk -> {
+                    // 将内容包装成JSON对象
+                    Map<String, String> wrapper = Map.of("d", chunk);
+                    String jsonData = JSONUtil.toJsonStr(wrapper);
+                    return ServerSentEvent.<String>builder()
+                            .data(jsonData)
+                            .build();
+                })
+                .concatWith(Mono.just(
+                        // 发送结束事件
+                        ServerSentEvent.<String>builder()
+                                .event("done")
+                                .data("")
+                                .build()
+                ));
+    }
+
+    @PostMapping("/deploy")
+    public BaseResponse<String> deloyApp(@RequestBody AppDeployRequest appDeployRequest,HttpServletRequest request){
+        ThrowUtils.throwIf(appDeployRequest.getAppId() == null || appDeployRequest.getAppId() <= 0, ErrorCode.PARAMS_ERROR, "应用ID无效");
+        User loginUser = userService.getLoginUser(request);
+        ThrowUtils.throwIf(loginUser == null, ErrorCode.NOT_LOGIN_ERROR, "用户未登录");
+        String deployUrl = appService.deployApp(appDeployRequest.getAppId(), loginUser);
+        return ResultUtils.success(deployUrl);
+    }
+
 }
 
