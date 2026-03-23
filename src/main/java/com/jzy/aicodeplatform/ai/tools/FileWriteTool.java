@@ -18,7 +18,7 @@ import java.nio.file.StandardOpenOption;
 @Slf4j
 public class FileWriteTool {
 
-    @Tool
+    @Tool("写入文件到指定路径")
     public String writeFile(@P("文件的相对路径") String filePath, @P("要写入文件的内容") String content, @ToolMemoryId Long appId) {
         try {
             Path path = Paths.get(filePath);
