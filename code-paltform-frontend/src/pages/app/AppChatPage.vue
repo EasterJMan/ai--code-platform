@@ -559,22 +559,25 @@ const generateCode = async (userMessage: string, aiMessageIndex: number) => {
       }
     })
 
-    // 处理错误
+    // 连接异常/关闭时兜底：后端流失败时常收不到 done，仅靠 onerror 结束转圈
     eventSource.onerror = function () {
-      if (streamCompleted || !isGenerating.value) return
-      // 检查是否是正常的连接关闭
-      if (eventSource?.readyState === EventSource.CONNECTING) {
+      if (streamCompleted) return
+      const es = eventSource
+      if (!es) return
+      if (es.readyState === EventSource.CLOSED) {
         streamCompleted = true
         isGenerating.value = false
-        eventSource?.close()
-
-        setTimeout(async () => {
-          await fetchAppInfo()
-          updatePreview()
-        }, 1000)
-      } else {
-        handleError(new Error('SSE连接错误'), aiMessageIndex)
+        es.close()
+        const row = messages.value[aiMessageIndex]
+        if (row?.loading || (row && !row.content)) {
+          handleError(new Error('流式连接已中断'), aiMessageIndex)
+        }
+        return
       }
+      if (es.readyState === EventSource.CONNECTING) {
+        return
+      }
+      handleError(new Error('SSE连接错误'), aiMessageIndex)
     }
   } catch (error) {
     console.error('创建 EventSource 失败：', error)

@@ -36,10 +36,76 @@
 5）禁止使用任何状态管理库、类型校验库、代码格式化库
 6）将可运行作为项目生成的第一要义，尽量用最简单的方式满足需求，避免使用复杂的技术或代码逻辑
 
+## 可构建性硬性规则（违反易导致 `vite build` / `vue/compiler-sfc` 失败）
+
+对照「错误 / 正确」示例生成；下述字母节为**必须遵守**的约束。
+
+### A. `<script setup>` 禁止 import 名与 `ref`/`const` 同名
+
+- **错**（`Identifier 'articles' has already been declared`）：
+```js
+import { getArticlesByCategory, articles } from '../utils/data'
+const articles = ref([])
+```
+- **对**：只 import 函数 + `const articleList = ref([])`；若需数组则 `import { articles as allArticlesData } from '...'`
+
+### B. `src/utils/data.js`（约定 + 最小模板，可按项目扩展）
+
+- 导出一份 `articles`（或 `mockArticles`）+ 纯函数；页面**只 import 函数**，列表用 `articleList` / `items` 等 ref，**禁止**同页既 `import { articles }` 又 `const articles = ref(...)`。
+```js
+export const articles = [
+  { id: '1', title: '示例', category: '前端', tags: ['Vue'], content: '# 正文', publishDate: '2024-01-01', readCount: 0 }
+]
+export function getArticlesByCategory(category) {
+  return articles.filter(a => a.category === category)
+}
+export function getArticleById(id) {
+  return articles.find(a => a.id === id) || null
+}
+```
+
+### C. 路由动态 import 与 `src/pages/` 文件名一致（含大小写）
+
+- `routes` 里每个 `import('../pages/Xxx.vue')` 须在磁盘**真实存在**，且与文件名**逐字一致**（Linux/CI 区分大小写，`Category.vue` ≠ `category.vue`）。
+```js
+component: () => import('../pages/ArticleList.vue')  // 禁止 articlelist.vue
+```
+
+### D. 依赖白名单
+
+- `package.json` **仅**允许：`vue`、`vue-router`、`vite`、`@vitejs/plugin-vue`（版本见下文参考）。
+- **禁止**源码中出现未列入依赖的 import（如 `axios`、`pinia`、`element-plus`、`lodash` 等）；本任务**不要**私自加依赖。
+
+### E. `.vue` 单文件与组件引用
+
+- 结构：一个 `<template>` + 一个 `<script setup>` + 可选 `<style scoped>`。
+- 模板用到的组件/子组件须 `import`；import 路径与磁盘文件名一致（同 C）。
+
+### F. 图标（可选）
+
+- `class="fas fa-xxx"` 时须在 `index.html` 引入 Font Awesome CDN，否则仅图标不显示，一般不致 build 失败。
+
+### G. `vite.config.js` 文件头（三行缺一不可）
+
+```
+import { fileURLToPath, URL } from 'node:url'
+import { defineConfig } from 'vite'
+import vue from '@vitejs/plugin-vue'
+```
+
+- **禁止**使用未先导入的 `fileURLToPath`（见下文完整 `defineConfig` 示例）。
+
+### H. 写入前自检
+
+- import 是否与同文件 `const`/`ref` 重名（A）；`router` 的 `import('../pages/...')` 是否已有对应文件（C）；子组件是否已 import（E）。
+- `data.js` 是否已 `export` 本页所用；`vite.config.js` 是否含 `node:url` 三行（G）；`main.js` 为 `createApp(App).use(router).mount('#app')` 且 `index.html` 有 `#app`。
+- 是否未引入白名单外包（D）。
+
 ## 参考配置
 
-1）vite.config.js 必须配置 base 路径以支持子路径部署、需要支持通过 @ 引入文件、不要配置端口号
+1）vite.config.js 必须配置 base 路径以支持子路径部署、需要支持通过 @ 引入文件、不要配置端口号；**且文件顶部必须包含** `import { fileURLToPath, URL } from 'node:url'`（或等价的 `url` 模块导入），与下方 `alias` 同时使用。
 ```
+import { fileURLToPath, URL } from 'node:url'
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
 
@@ -94,6 +160,8 @@ const router = createRouter({
 ## 严格输出约束
 
 1）必须通过使用【文件写入工具】依次创建每个文件（而不是直接输出文件代码）。
+   调用工具时，一定要按照工具所需参数正确传参
+   工具参数中的 `content` 为文件正文（UTF-8），须保证整段工具调用的 arguments 为合法 JSON：字符串内的 `"`、`\`、换行等必须按 JSON 规范转义。为节省 token 并降低失败率：单文件尽量精简、可拆成多个小组件文件；避免在单文件里堆砌与可运行无关的冗长示例。
 2）需要在开头输出简单的网站生成计划
 3）需要在结尾输出简单的生成完毕提示（但是不要展开介绍项目）
 4）注意，禁止输出以下任何内容：

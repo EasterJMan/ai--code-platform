@@ -8,6 +8,7 @@ import com.jzy.aicodeplatform.ai.model.MultiFileCodeResult;
 import com.jzy.aicodeplatform.ai.model.message.AiResponseMessage;
 import com.jzy.aicodeplatform.ai.model.message.ToolExecutedMessage;
 import com.jzy.aicodeplatform.ai.model.message.ToolRequestMessage;
+import com.jzy.aicodeplatform.constant.AppConstant;
 import com.jzy.aicodeplatform.core.parse.CodeParserExecutor;
 import com.jzy.aicodeplatform.core.saver.CodeFileSaverExecutor;
 import com.jzy.aicodeplatform.exception.BusinessException;
@@ -165,18 +166,23 @@ public class AiCodeGeneratorFacade {
                     )
                     .onCompleteResponse(completeResponse -> {
                         try {
-                            String completeHtmlCode = codeBuilder.toString();
-                            Object parsedResult = CodeParserExecutor.executeParser(completeHtmlCode, codeGenTypeEnum);
-                            // 保存代码到文件
-                            File savedDir = CodeFileSaverExecutor.executeSaver(parsedResult, codeGenTypeEnum, appId);
-                            log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
+                            if (codeGenTypeEnum == CodeGenTypeEnum.VUE_PROJECT) {
+                                // Vue 工程文件已在流式过程中由 FileWriteTool 写入磁盘，聚合文本不是可解析的 HTML/多文件格式
+                                String projectDir = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+                                log.info("Vue 项目流式生成结束，文件已由工具写入: {}", projectDir);
+                            } else {
+                                String completeHtmlCode = codeBuilder.toString();
+                                Object parsedResult = CodeParserExecutor.executeParser(completeHtmlCode, codeGenTypeEnum);
+                                File savedDir = CodeFileSaverExecutor.executeSaver(parsedResult, codeGenTypeEnum, appId);
+                                log.info("保存成功，路径为：" + savedDir.getAbsolutePath());
+                            }
                         } catch (Exception e) {
                             log.error("保存失败: {}", e.getMessage());
                         }
                         sink.complete();
                     })
                     .onError((Throwable error) -> {
-                        error.printStackTrace();
+                        log.error("Vue 项目 TokenStream 失败", error);
                         sink.error(error);
                     })
                     .start();

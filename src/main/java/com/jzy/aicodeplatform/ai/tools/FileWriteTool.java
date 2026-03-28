@@ -8,6 +8,7 @@ import dev.langchain4j.agent.tool.ToolMemoryId;
 import lombok.extern.slf4j.Slf4j;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,28 +21,29 @@ import java.nio.file.StandardOpenOption;
 public class FileWriteTool {
 
     @Tool("写入文件到指定路径")
-    public String writeFile(@P("文件的相对路径") String filePath, @P("要写入文件的内容") String content, @ToolMemoryId Long appId) {
+    public String writeFile(
+            @P("文件的相对路径") String filePath,
+            @P("要写入的完整文件正文（UTF-8）。工具调用 JSON 中须对引号、反斜杠、换行等按 JSON 规范正确转义") String content,
+            @ToolMemoryId Long appId) {
         try {
-            if (StrUtil.isBlank(filePath) || StrUtil.isBlank(content) || appId == null){
-                String result =  "文件写入失败："+ filePath + ",appId:" + appId +  ",内容:"  + content;
+            if (StrUtil.isBlank(filePath) || StrUtil.isBlank(content) || appId == null) {
+                return "文件写入失败：参数不完整，filePath=" + filePath + ", appId=" + appId;
             }
             Path path = Paths.get(filePath);
             if (!path.isAbsolute()) {
-                //相对路径转换为绝对路径，创建基于appId的项目目录
                 String projectDirName = "vue_project" + appId;
                 Path projectRoot = Paths.get(AppConstant.CODE_OUTPUT_ROOT_DIR, projectDirName);
                 path = projectRoot.resolve(filePath);
             }
-            //创建父目录，如果不存在
             Path parent = path.getParent();
             if (parent != null) {
                 Files.createDirectories(parent);
             }
-            Files.write(path, content.getBytes(), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
-            log.info("文件写入成功 :{}",path.toAbsolutePath());
+            Files.write(path, content.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
+            log.info("文件写入成功 :{}", path.toAbsolutePath());
             return "文件写入成功" + filePath;
         } catch (IOException e) {
-            String result =  "文件写入失败："+ filePath + ",错误:"  + e.getMessage();
+            String result = "文件写入失败：" + filePath + ",错误:" + e.getMessage();
             log.error(result, e);
             return result;
         }

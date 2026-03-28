@@ -36,6 +36,11 @@ import java.util.List;
 @Service
 public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatHistory>  implements ChatHistoryService{
 
+    /**
+     * 单条入库消息最大字符数（LONGTEXT 理论极大，此处防止异常超大内容拖垮 JVM / 单次请求）
+     */
+    private static final int MAX_MESSAGE_CHARS = 12_000_000;
+
     @Resource
     @Lazy
     private AppService appService;
@@ -50,9 +55,14 @@ public class ChatHistoryServiceImpl extends ServiceImpl<ChatHistoryMapper, ChatH
         // 验证消息类型是否有效
         ChatHistoryMessageTypeEnum messageTypeEnum = ChatHistoryMessageTypeEnum.getEnumByValue(messageType);
         ThrowUtils.throwIf(messageTypeEnum == null, ErrorCode.PARAMS_ERROR, "不支持的消息类型: " + messageType);
+        String toSave = message;
+        if (message.length() > MAX_MESSAGE_CHARS) {
+            log.warn("聊天消息过长，已截断后入库，appId={}, 原长度={}", appId, message.length());
+            toSave = message.substring(0, MAX_MESSAGE_CHARS) + "\n...[内容过长已截断]";
+        }
         ChatHistory chatHistory = ChatHistory.builder()
                 .appId(appId)
-                .message(message)
+                .message(toSave)
                 .messageType(messageType)
                 .userId(userId)
                 .build();

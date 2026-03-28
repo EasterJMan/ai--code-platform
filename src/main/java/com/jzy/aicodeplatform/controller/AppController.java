@@ -302,10 +302,9 @@ public class AppController {
         User loginUser = userService.getLoginUser(request);
         // 调用服务生成代码（流式）
         Flux<String> contentFlux = appService.chatToGenCode(appId, message, loginUser);
-        // 转换为 ServerSentEvent 格式
+        // 转换为 ServerSentEvent；出错时仍下发 business-error + done，避免前端 EventSource 一直等不到结束而转圈
         return contentFlux
                 .map(chunk -> {
-                    // 将内容包装成JSON对象
                     Map<String, String> wrapper = Map.of("d", chunk);
                     String jsonData = JSONUtil.toJsonStr(wrapper);
                     return ServerSentEvent.<String>builder()
@@ -313,12 +312,47 @@ public class AppController {
                             .build();
                 })
                 .concatWith(Mono.just(
-                        // 发送结束事件
                         ServerSentEvent.<String>builder()
                                 .event("done")
                                 .data("")
                                 .build()
+                ))
+                .onErrorResume(throwable -> Flux.concat(
+                        Mono.just(ServerSentEvent.<String>builder()
+                                .event("business-error")
+                                .data(chatGenCodeErrorJson(throwable))
+                                .build()),
+                        Mono.just(ServerSentEvent.<String>builder()
+                                .event("done")
+                                .data("")
+                                .build())
                 ));
+    }
+
+    /**
+     * SSE business-error 事件体，与前端 {@code business-error} 监听器字段一致
+     */
+    private static String chatGenCodeErrorJson(Throwable throwable) {
+        if (throwable instanceof BusinessException be) {
+            return JSONUtil.toJsonStr(Map.of(
+                    "error", true,
+                    "code", be.getCode(),
+                    "message", be.getMessage() != null ? be.getMessage() : ErrorCode.SYSTEM_ERROR.getMessage()
+            ));
+        }
+        String userMessage = "代码生成中断，请稍后重试";
+        Throwable cause = throwable.getCause();
+        if (cause != null) {
+            String name = cause.getClass().getName();
+            if (name.contains("JsonParseException")) {
+                userMessage = "模型工具参数解析失败，请重试或简化单次生成内容";
+            }
+        }
+        return JSONUtil.toJsonStr(Map.of(
+                "error", true,
+                "code", ErrorCode.SYSTEM_ERROR.getCode(),
+                "message", userMessage
+        ));
     }
 
     @PostMapping("/deploy")
