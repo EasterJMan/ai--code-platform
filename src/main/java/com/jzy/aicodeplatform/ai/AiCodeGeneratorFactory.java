@@ -15,7 +15,6 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.service.AiServices;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 import java.time.Duration;
@@ -43,10 +42,6 @@ public class AiCodeGeneratorFactory {
 
     /**
      * AI 服务实例缓存
-     * 缓存策略：
-     * - 最大缓存 1000 个实例
-     * - 写入后 30 分钟过期
-     * - 访问后 10 分钟过期
      */
     private final Cache<String, AiCodeGeneratorService> serviceCache = Caffeine.newBuilder()
             .maximumSize(1000)
@@ -57,27 +52,29 @@ public class AiCodeGeneratorFactory {
             })
             .build();
 
-
-
     /**
-     * 根据 appId 获取服务（带缓存）
+     * 根据 appId 获取服务（带缓存）这个方法是为了兼容历史逻辑
      */
     public AiCodeGeneratorService getAiCodeGeneratorService(long appId) {
         return getAiCodeGeneratorService(appId, CodeGenTypeEnum.HTML);
     }
 
-
     /**
-     * 根据 appId 获取服务（带缓存）
+     * 根据 appId 和代码生成类型获取服务（带缓存）
      */
-    public AiCodeGeneratorService getAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenTypeEnum) {
-        String cacheKey = buildCacheKey(appId, codeGenTypeEnum);
-        return serviceCache.get(cacheKey,key -> createAiCodeGeneratorService(appId,codeGenTypeEnum));
+    public AiCodeGeneratorService getAiCodeGeneratorService(long appId, CodeGenTypeEnum codeGenType) {
+        String cacheKey = buildCacheKey(appId, codeGenType);
+        return serviceCache.get(cacheKey, key -> createAiCodeGeneratorService(appId, codeGenType));
     }
 
     /**
-     * 创建新的 AI 服务实例
+     * 构建缓存键
      */
+    private String buildCacheKey(long appId, CodeGenTypeEnum codeGenType) {
+        return appId + "_" + codeGenType.getValue();
+    }
+
+
     /**
      * 创建新的 AI 服务实例
      */
@@ -111,21 +108,6 @@ public class AiCodeGeneratorFactory {
             default -> throw new BusinessException(ErrorCode.SYSTEM_ERROR,
                     "不支持的代码生成类型: " + codeGenType.getValue());
         };
-    }
-
-
-
-    /**
-     * 默认提供一个 Bean
-     */
-    @Bean
-    public AiCodeGeneratorService aiCodeGeneratorService() {
-        return getAiCodeGeneratorService(0L);
-    }
-
-
-    private String buildCacheKey(long appId, CodeGenTypeEnum codeGenTypeEnum) {
-        return appId + "_" + codeGenTypeEnum.getValue();
     }
 
 }

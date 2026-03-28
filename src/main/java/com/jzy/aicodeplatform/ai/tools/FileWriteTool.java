@@ -1,5 +1,6 @@
 package com.jzy.aicodeplatform.ai.tools;
 
+import cn.hutool.core.util.StrUtil;
 import com.jzy.aicodeplatform.constant.AppConstant;
 import dev.langchain4j.agent.tool.P;
 import dev.langchain4j.agent.tool.Tool;
@@ -21,6 +22,9 @@ public class FileWriteTool {
     @Tool("写入文件到指定路径")
     public String writeFile(@P("文件的相对路径") String filePath, @P("要写入文件的内容") String content, @ToolMemoryId Long appId) {
         try {
+            if (StrUtil.isBlank(filePath) || StrUtil.isBlank(content) || appId == null){
+                String result =  "文件写入失败："+ filePath + ",appId:" + appId +  ",内容:"  + content;
+            }
             Path path = Paths.get(filePath);
             if (!path.isAbsolute()) {
                 //相对路径转换为绝对路径，创建基于appId的项目目录

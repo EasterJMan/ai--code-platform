@@ -5,9 +5,11 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.jzy.aicodeplatform.config.builder.VueProjectBuilder;
 import com.jzy.aicodeplatform.constant.AppConstant;
-import com.jzy.aicodeplatform.constant.ChatHistoryMessageTypeEnum;
+import com.jzy.aicodeplatform.model.enums.ChatHistoryMessageTypeEnum;
 import com.jzy.aicodeplatform.core.AiCodeGeneratorFacade;
+import com.jzy.aicodeplatform.core.handler.StreamHandlerExecutor;
 import com.jzy.aicodeplatform.exception.BusinessException;
 import com.jzy.aicodeplatform.exception.ErrorCode;
 import com.jzy.aicodeplatform.exception.ThrowUtils;
@@ -55,6 +57,12 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     private ChatHistoryService chatHistoryService;
+
+    @Resource
+    private StreamHandlerExecutor streamHandlerExecutor;
+
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
 
 
     @Override
@@ -138,20 +146,9 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         //保存用户消息
         chatHistoryService.addChatMessage(appId, userMessage, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
         //调用ai生成代码
-        Flux<String> contentFlux = aiCodeGeneratorFacade.generateAndSaveCodeStream(userMessage, codeGenTypeEnum, appId);
-        StringBuilder stringBuilder = new StringBuilder();
-        return contentFlux.map(chunk -> {
-            stringBuilder.append(chunk);
-            return chunk;
-        }).doOnComplete(() -> {
-            String result = stringBuilder.toString();
-            if (StrUtil.isNotBlank(result)) {
-                chatHistoryService.addChatMessage(appId, stringBuilder.toString(), ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
-            }
-        }).doOnError(error -> {
-            String message = "AI回复失败" + error.getMessage();
-            chatHistoryService.addChatMessage(appId, message, ChatHistoryMessageTypeEnum.AI.getValue(), loginUser.getId());
-        });
+        Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(userMessage, codeGenTypeEnum, appId);
+
+        return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
     }
 
     @Override
@@ -180,22 +177,40 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         if (!dir.exists() || !dir.isDirectory()) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "应用代码不存在，请先生成应用");
         }
-        // 7. 复制文件到部署目录
+        // 6. 检查源目录是否存在
+        File sourceDir = new File(dirPath);
+        if (!sourceDir.exists() || !sourceDir.isDirectory()) {
+            throw new BusinessException(ErrorCode.SYSTEM_ERROR, "应用代码不存在，请先生成代码");
+        }
+        // 7. Vue 项目特殊处理：执行构建
+        CodeGenTypeEnum codeGenTypeEnum = CodeGenTypeEnum.getEnumByValue(codeGenType);
+        if (codeGenTypeEnum == CodeGenTypeEnum.VUE_PROJECT) {
+            // Vue 项目需要构建
+            boolean buildSuccess = vueProjectBuilder.buildProject(dirPath);
+            ThrowUtils.throwIf(!buildSuccess, ErrorCode.SYSTEM_ERROR, "Vue 项目构建失败，请检查代码和依赖");
+            // 检查 dist 目录是否存在
+            File distDir = new File(dirPath, "dist");
+            ThrowUtils.throwIf(!distDir.exists(), ErrorCode.SYSTEM_ERROR, "Vue 项目构建完成但未生成 dist 目录");
+            // 将 dist 目录作为部署源
+            sourceDir = distDir;
+            log.info("Vue 项目构建成功，将部署 dist 目录: {}", distDir.getAbsolutePath());
+        }
+        // 8. 复制文件到部署目录
         String deployDirPath = AppConstant.CODE_DEPLOY_ROOT_DIR + File.separator + deployKey;
         File deployDir = new File(deployDirPath);
         try {
-            FileUtil.copyContent(dir, deployDir, true);
+            FileUtil.copyContent(sourceDir, deployDir, true);
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.SYSTEM_ERROR, "部署失败：" + e.getMessage());
         }
-        // 8. 更新应用的 deployKey 和部署时间
+        // 9. 更新应用的 deployKey 和部署时间
         App updateApp = new App();
         updateApp.setId(appId);
         updateApp.setDeployKey(deployKey);
         updateApp.setDeployedTime(LocalDateTime.now());
         boolean updateResult = super.updateById(updateApp);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
-        // 9. 返回可访问的 URL
+        // 10. 返回可访问的 URL
         return String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
     }
 

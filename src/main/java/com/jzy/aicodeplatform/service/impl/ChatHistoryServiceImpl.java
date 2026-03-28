@@ -2,7 +2,7 @@ package com.jzy.aicodeplatform.service.impl;
 
 import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
-import com.jzy.aicodeplatform.constant.ChatHistoryMessageTypeEnum;
+import com.jzy.aicodeplatform.model.enums.ChatHistoryMessageTypeEnum;
 import com.jzy.aicodeplatform.constant.UserConstant;
 import com.jzy.aicodeplatform.exception.ErrorCode;
 import com.jzy.aicodeplatform.exception.ThrowUtils;

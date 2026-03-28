@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+		 xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
 	<modelVersion>4.0.0</modelVersion>
 	<parent>
 		<groupId>org.springframework.boot</groupId>
@@ -29,18 +29,13 @@
 	<properties>
 		<java.version>21</java.version>
 	</properties>
+
 	<dependencies>
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
 
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-devtools</artifactId>
-			<scope>runtime</scope>
-			<optional>true</optional>
-		</dependency>
 		<dependency>
 			<groupId>com.mysql</groupId>
 			<artifactId>mysql-connector-j</artifactId>
@@ -70,41 +65,66 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-aop</artifactId>
 		</dependency>
-        <dependency>
-            <groupId>com.mybatis-flex</groupId>
-            <artifactId>mybatis-flex-spring-boot3-starter</artifactId>
-            <version>1.11.0</version>
-        </dependency>
-        <!-- 代码生成模块 -->
-        <dependency>
-            <groupId>com.mybatis-flex</groupId>
-            <artifactId>mybatis-flex-codegen</artifactId>
-            <version>1.11.0</version>
-        </dependency>
-        <!-- 数据库连接池 -->
-        <dependency>
-            <groupId>com.zaxxer</groupId>
-            <artifactId>HikariCP</artifactId>
-        </dependency>
+		<dependency>
+			<groupId>com.mybatis-flex</groupId>
+			<artifactId>mybatis-flex-spring-boot3-starter</artifactId>
+			<version>1.11.0</version>
+		</dependency>
+		<!-- 代码生成模块 -->
+		<dependency>
+			<groupId>com.mybatis-flex</groupId>
+			<artifactId>mybatis-flex-codegen</artifactId>
+			<version>1.11.0</version>
+		</dependency>
+		<!-- 数据库连接池 -->
+		<dependency>
+			<groupId>com.zaxxer</groupId>
+			<artifactId>HikariCP</artifactId>
+		</dependency>
+<!--		<dependency>-->
+<!--			<groupId>dev.langchain4j</groupId>-->
+<!--			<artifactId>langchain4j</artifactId>-->
+<!--			<version>1.1.0</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>dev.langchain4j</groupId>-->
+<!--			<artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>-->
+<!--			<version>1.1.0-beta7</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>dev.langchain4j</groupId>-->
+<!--			<artifactId>langchain4j-reactor</artifactId>-->
+<!--			<version>1.1.0-beta7</version>-->
+<!--		</dependency>-->
+<!--		<dependency>-->
+<!--			<groupId>dev.langchain4j</groupId>-->
+<!--			<artifactId>langchain4j-community-redis-spring-boot-starter</artifactId>-->
+<!--			<version>1.1.0-beta7</version>-->
+<!--		</dependency>-->
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j</artifactId>
-			<version>1.1.0</version>
+			<version>1.9.1</version>
 		</dependency>
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
-			<version>1.1.0-beta7</version>
+			<version>1.9.1-beta17</version>
 		</dependency>
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
 			<artifactId>langchain4j-reactor</artifactId>
-			<version>1.1.0-beta7</version>
+			<version>1.9.1-beta17</version>
 		</dependency>
 		<dependency>
 			<groupId>dev.langchain4j</groupId>
-			<artifactId>langchain4j-community-redis-spring-boot-starter</artifactId>
-			<version>1.1.0-beta7</version>
+			<artifactId>langchain4j-open-ai-spring-boot-starter</artifactId>
+			<version>1.9.1-beta17</version>
+		</dependency>
+		<dependency>
+			<groupId>dev.langchain4j</groupId>
+			<artifactId>langchain4j-community-redis</artifactId>
+			<version>1.9.1-beta17</version>
 		</dependency>
 		<dependency>
 			<groupId>com.github.ben-manes.caffeine</groupId>
@@ -115,8 +135,14 @@
 			<groupId>org.springframework.session</groupId>
 			<artifactId>spring-session-data-redis</artifactId>
 		</dependency>
+		<dependency>
+			<groupId>redis.clients</groupId>
+			<artifactId>jedis</artifactId>
+			<version>7.0.0</version>
+		</dependency>
 
 	</dependencies>
+
 
 	<build>
 		<plugins>
