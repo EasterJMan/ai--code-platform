@@ -42,21 +42,10 @@ knife4j:
   setting:
     language: zh_cn
 
-langchain4j:
-  open-ai:
-    chat-model:
-      base-url: https://api.minimaxi.com/v1
-      api-key: <Your API Key>
-      model-name: MiniMax-M2.5
-      log-requests: true
-      log-responses: true
-      max-tokens: 10000
-#      strict-json-schema: true
-#      response-format: json_object
-    streaming-chat-model:
-      base-url:https://api.minimaxi.com/v1
-      api-key: <Your API Key>
-      model-name: deepseek-chat
-      max-tokens: 8192
-      log-requests: true
-      log-responses: true
+app:
+  screenshot:
+    mq-enabled: false
+    topic: screenshot-topic
+    tag: generate
+    consumer-group: screenshot-consumer-group
+    max-retry: 3
