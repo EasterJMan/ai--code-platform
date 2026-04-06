@@ -1,5 +1,6 @@
 package com.jzy.aicodeplatform.service;
 
+import com.jzy.aicodeplatform.model.dto.app.AppAddRequest;
 import com.jzy.aicodeplatform.model.dto.app.AppQueryRequest;
 import com.jzy.aicodeplatform.model.entity.App;
 import com.jzy.aicodeplatform.model.entity.User;
@@ -17,7 +18,7 @@ import java.util.List;
  */
 public interface AppService extends IService<App> {
 
-
+    Long createApp(AppAddRequest appAddRequest,User loginUser);
 
     /**
      * 通过对话生成应用代码
@@ -61,6 +62,12 @@ public interface AppService extends IService<App> {
     QueryWrapper getQueryWrapper(AppQueryRequest appQueryRequest);
 
 
+    /**
+     * 异步生成应用截图封面
+     * @param appId
+     * @param appUrl
+     */
+    void generateAppScreenshotAsync(Long appId, String appUrl);
 }
 
 

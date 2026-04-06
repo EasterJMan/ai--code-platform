@@ -5,8 +5,10 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.RandomUtil;
 import cn.hutool.core.util.StrUtil;
+import com.jzy.aicodeplatform.ai.AiCodeGenTypeRoutingService;
 import com.jzy.aicodeplatform.config.builder.VueProjectBuilder;
 import com.jzy.aicodeplatform.constant.AppConstant;
+import com.jzy.aicodeplatform.model.dto.app.AppAddRequest;
 import com.jzy.aicodeplatform.model.enums.ChatHistoryMessageTypeEnum;
 import com.jzy.aicodeplatform.core.AiCodeGeneratorFacade;
 import com.jzy.aicodeplatform.core.handler.StreamHandlerExecutor;
@@ -22,12 +24,17 @@ import com.jzy.aicodeplatform.model.vo.AppVO;
 import com.jzy.aicodeplatform.model.vo.UserVO;
 import com.jzy.aicodeplatform.service.AppService;
 import com.jzy.aicodeplatform.service.ChatHistoryService;
+import com.jzy.aicodeplatform.service.ScreenShotService;
 import com.jzy.aicodeplatform.service.UserService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
 import reactor.core.publisher.Flux;
 
 import java.io.File;
@@ -37,6 +44,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
 /**
@@ -63,6 +71,33 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
 
     @Resource
     private VueProjectBuilder vueProjectBuilder;
+
+    @Resource
+    private ScreenShotService screenShotService;
+
+    @Resource
+    private AiCodeGenTypeRoutingService aiCodeGenTypeRoutingService;
+
+    @Override
+    public Long createApp(AppAddRequest appAddRequest, User loginUser) {
+        // 参数校验
+        String initPrompt = appAddRequest.getInitPrompt();
+        ThrowUtils.throwIf(StrUtil.isBlank(initPrompt), ErrorCode.PARAMS_ERROR, "初始化 prompt 不能为空");
+        // 构造入库对象
+        App app = new App();
+        BeanUtil.copyProperties(appAddRequest, app);
+        app.setUserId(loginUser.getId());
+        // 应用名称暂时为 initPrompt 前 12 位
+        app.setAppName(initPrompt.substring(0, Math.min(initPrompt.length(), 12)));
+        // 使用 AI 智能选择代码生成类型
+        CodeGenTypeEnum selectedCodeGenType = aiCodeGenTypeRoutingService.routeCodeGenType(initPrompt);
+        app.setCodeGenType(selectedCodeGenType.getValue());
+        // 插入数据库
+        boolean result = this.save(app);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        log.info("应用创建成功，ID: {}, 类型: {}", app.getId(), selectedCodeGenType.getValue());
+        return app.getId();
+    }
 
 
     @Override
@@ -211,7 +246,45 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         boolean updateResult = super.updateById(updateApp);
         ThrowUtils.throwIf(!updateResult, ErrorCode.OPERATION_ERROR, "更新应用部署信息失败");
         // 10. 返回可访问的 URL
-        return String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        String appDeployUrl = String.format("%s/%s", AppConstant.CODE_DEPLOY_HOST, deployKey);
+        //11.异步生成截图
+        generateAppScreenshotAsync(appId, appDeployUrl);
+        return appDeployUrl;
+    }
+
+    /**
+     * 异步生成应用截图并更新封面
+     *
+     * @param appId  应用ID
+     * @param appUrl 应用访问URL
+     */
+    @Override
+    public void generateAppScreenshotAsync(Long appId, String appUrl) {
+        ThrowUtils.throwIf(appId == null || appId <= 0, ErrorCode.PARAMS_ERROR, "应用ID不能为空");
+        ThrowUtils.throwIf(StrUtil.isBlank(appUrl), ErrorCode.PARAMS_ERROR, "应用URL不能为空");
+        // RocketMQ 备用路径（后续需要切回 MQ 时启用）：
+//         screenshotTaskProducer.sendScreenshotTask(appId, appUrl);
+        // 暂时停用 RocketMQ 链路，先走本地异步执行
+        CompletableFuture.runAsync(() -> {
+            try {
+                String screenshotUrl = screenShotService.generateAndUploadScreenshot(appUrl);
+                if (StrUtil.isBlank(screenshotUrl)) {
+                    log.error("异步生成截图失败，结果为空, appId={}, appUrl={}", appId, appUrl);
+                    return;
+                }
+                App updateApp = new App();
+                updateApp.setId(appId);
+                updateApp.setCover(screenshotUrl);
+                boolean updated = this.updateById(updateApp);
+                if (!updated) {
+                    log.error("异步更新应用封面失败, appId={}, cover={}", appId, screenshotUrl);
+                    return;
+                }
+                log.info("异步更新应用封面成功, appId={}, cover={}", appId, screenshotUrl);
+            } catch (Exception e) {
+                log.error("异步生成应用截图异常, appId={}, appUrl={}", appId, appUrl, e);
+            }
+        });
     }
 
 
