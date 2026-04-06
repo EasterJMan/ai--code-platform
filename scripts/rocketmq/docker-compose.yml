@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  namesrv:
+    image: ${ROCKETMQ_IMAGE:-apache/rocketmq:5.3.2}
+    container_name: ${NAMESRV_CONTAINER:-rmq-namesrv}
+    command: sh mqnamesrv
+    environment:
+      - JAVA_OPT_EXT=${NAMESRV_JAVA_OPT:--server -Xms128m -Xmx128m -Xmn64m}
+    ports:
+      - "${NAMESRV_PORT:-9876}:9876"
+    restart: always
+
+  broker:
+    image: ${ROCKETMQ_IMAGE:-apache/rocketmq:5.3.2}
+    container_name: ${BROKER_CONTAINER:-rmq-broker}
+    depends_on:
+      - namesrv
+    command: sh mqbroker -n ${NAMESRV_CONTAINER:-rmq-namesrv}:9876 --enable-proxy
+    environment:
+      - JAVA_OPT_EXT=${BROKER_JAVA_OPT:--server -Xms384m -Xmx384m -Xmn192m}
+    ports:
+      - "${BROKER_PORT:-10911}:10911"
+      - "${BROKER_HA_PORT:-10909}:10909"
+      - "${BROKER_FAST_PORT:-10912}:10912"
+      - "${PROXY_PORT:-8081}:8081"
+    restart: always
+
+  dashboard:
+    image: ${DASHBOARD_IMAGE:-apacherocketmq/rocketmq-dashboard:latest}
+    container_name: ${DASHBOARD_CONTAINER:-rmq-dashboard}
+    depends_on:
+      - namesrv
+    environment:
+      - JAVA_OPTS=-Drocketmq.namesrv.addr=${NAMESRV_CONTAINER:-rmq-namesrv}:9876
+    ports:
+      - "${DASHBOARD_PORT:-8080}:8082"
+    profiles:
+      - dashboard
+    restart: always
