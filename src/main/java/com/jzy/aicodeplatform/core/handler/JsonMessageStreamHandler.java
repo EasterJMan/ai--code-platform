@@ -1,14 +1,13 @@
 package com.jzy.aicodeplatform.core.handler;
 
 
-import cn.hutool.core.io.FileUtil;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.jzy.aicodeplatform.ai.model.message.*;
 import com.jzy.aicodeplatform.ai.tools.BaseTool;
 import com.jzy.aicodeplatform.ai.tools.ToolManager;
-import com.jzy.aicodeplatform.config.builder.VueProjectBuilder;
+import com.jzy.aicodeplatform.core.builder.VueProjectBuilder;
 import com.jzy.aicodeplatform.constant.AppConstant;
 import com.jzy.aicodeplatform.model.enums.ChatHistoryMessageTypeEnum;
 import com.jzy.aicodeplatform.model.entity.User;

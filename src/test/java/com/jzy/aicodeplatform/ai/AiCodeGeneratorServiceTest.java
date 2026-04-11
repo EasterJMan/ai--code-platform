@@ -5,10 +5,8 @@ import com.jzy.aicodeplatform.ai.model.MultiFileCodeResult;
 import jakarta.annotation.Resource;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 
-import static org.junit.jupiter.api.Assertions.*;
 
 @SpringBootTest
 class AiCodeGeneratorServiceTest {
@@ -18,7 +16,7 @@ class AiCodeGeneratorServiceTest {
 
     @Test
     void generateHtmlCode() {
-        HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode("做一个交流博客，代码不超过20行，帮我输出html代码，以及描述");
+        HtmlCodeResult result = aiCodeGeneratorService.generateHtmlCode("做一个交流博客，代码不超过20行");
         Assertions.assertNotNull(result);
     }
 
