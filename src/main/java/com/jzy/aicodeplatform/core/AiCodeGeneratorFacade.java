@@ -9,6 +9,7 @@ import com.jzy.aicodeplatform.ai.model.message.AiResponseMessage;
 import com.jzy.aicodeplatform.ai.model.message.ToolExecutedMessage;
 import com.jzy.aicodeplatform.ai.model.message.ToolRequestMessage;
 import com.jzy.aicodeplatform.constant.AppConstant;
+import com.jzy.aicodeplatform.core.builder.VueProjectBuilder;
 import com.jzy.aicodeplatform.core.parse.CodeParserExecutor;
 import com.jzy.aicodeplatform.core.saver.CodeFileSaverExecutor;
 import com.jzy.aicodeplatform.exception.BusinessException;
@@ -32,6 +33,9 @@ public class AiCodeGeneratorFacade {
 
     @Resource
     private AiCodeGeneratorFactory aiCodeGeneratorFactory;
+
+    @Resource
+    private VueProjectBuilder vueProjectBuilder;
 
 
     /**
@@ -168,7 +172,9 @@ public class AiCodeGeneratorFacade {
                         try {
                             if (codeGenTypeEnum == CodeGenTypeEnum.VUE_PROJECT) {
                                 // Vue 工程文件已在流式过程中由 FileWriteTool 写入磁盘，聚合文本不是可解析的 HTML/多文件格式
+                                //执行Vue项目构建，同步执行，确保预览时项目已就绪
                                 String projectDir = AppConstant.CODE_OUTPUT_ROOT_DIR + "/vue_project_" + appId;
+                                vueProjectBuilder.buildProject(projectDir);
                                 log.info("Vue 项目流式生成结束，文件已由工具写入: {}", projectDir);
                             } else {
                                 String completeHtmlCode = codeBuilder.toString();

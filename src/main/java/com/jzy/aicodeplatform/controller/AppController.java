@@ -16,8 +16,9 @@ import com.jzy.aicodeplatform.exception.ThrowUtils;
 import com.jzy.aicodeplatform.model.dto.app.*;
 import com.jzy.aicodeplatform.model.entity.App;
 import com.jzy.aicodeplatform.model.entity.User;
-import com.jzy.aicodeplatform.model.enums.CodeGenTypeEnum;
 import com.jzy.aicodeplatform.model.vo.AppVO;
+import com.jzy.aicodeplatform.ratelimter.annotation.RateLimit;
+import com.jzy.aicodeplatform.ratelimter.enums.RateLimitType;
 import com.jzy.aicodeplatform.service.AppService;
 import com.jzy.aicodeplatform.service.ProjectDownloadService;
 import com.jzy.aicodeplatform.service.UserService;
@@ -27,6 +28,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.http.MediaType;
 import org.springframework.http.codec.ServerSentEvent;
 import org.springframework.web.bind.annotation.*;
@@ -177,6 +179,11 @@ public class AppController {
      * @return 精选应用列表
      */
     @PostMapping("/good/list/page/vo")
+    @Cacheable(
+            value = "good_app_page",
+            key = "T(com.jzy.aicodeplatform.util.CacheKeyUtils).generateKey(appQueryRequest)",
+            condition = "#appQueryRequest.pageNum <= 10"
+    )
     public BaseResponse<Page<AppVO>> listGoodAppVOByPage(@RequestBody AppQueryRequest appQueryRequest) {
         ThrowUtils.throwIf(appQueryRequest == null, ErrorCode.PARAMS_ERROR);
         // 限制每页最多 20 个
@@ -288,6 +295,7 @@ public class AppController {
     // endregion
 
     @GetMapping(value = "/chat/gen/code", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
+    @RateLimit(limitType = RateLimitType.USER, rate = 5, rateInterval = 60, message = "AI 对话请求过于频繁")
     public Flux<ServerSentEvent<String>> chatToGenCode(@RequestParam Long appId,
                                                        @RequestParam String message,
                                                        HttpServletRequest request) {
