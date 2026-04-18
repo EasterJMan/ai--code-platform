@@ -1,4 +1,4 @@
-package com.jzy.aicodeplatform.util;
+package com.jzy.aicodeplatform.utils;
 
 import cn.hutool.crypto.digest.DigestUtil;
 import cn.hutool.json.JSONUtil;

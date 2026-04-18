@@ -4,7 +4,7 @@ import com.jzy.aicodeplatform.langgraph4j.model.ImageCollectionPlan;
 import com.jzy.aicodeplatform.langgraph4j.model.ImageResource;
 import com.jzy.aicodeplatform.langgraph4j.state.WorkflowContext;
 import com.jzy.aicodeplatform.langgraph4j.tools.ImageSearchTool;
-import com.jzy.aicodeplatform.util.SpringContextUtil;
+import com.jzy.aicodeplatform.utils.SpringContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;

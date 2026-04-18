@@ -181,7 +181,7 @@ public class AppController {
     @PostMapping("/good/list/page/vo")
     @Cacheable(
             value = "good_app_page",
-            key = "T(com.jzy.aicodeplatform.util.CacheKeyUtils).generateKey(appQueryRequest)",
+            key = "T(com.jzy.aicodeplatform.utils.CacheKeyUtils).generateKey(#appQueryRequest)",
             condition = "#appQueryRequest.pageNum <= 10"
     )
     public BaseResponse<Page<AppVO>> listGoodAppVOByPage(@RequestBody AppQueryRequest appQueryRequest) {
@@ -201,7 +201,6 @@ public class AppController {
         appVOPage.setRecords(appVOList);
         return ResultUtils.success(appVOPage);
     }
-
 
     // endregion
 

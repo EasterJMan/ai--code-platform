@@ -1,4 +1,4 @@
-package com.jzy.aicodeplatform.util;
+package com.jzy.aicodeplatform.utils;
 
 import cn.hutool.core.img.ImgUtil;
 import cn.hutool.core.io.FileUtil;

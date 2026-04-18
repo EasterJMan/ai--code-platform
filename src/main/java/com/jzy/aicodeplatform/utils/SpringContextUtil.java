@@ -1,4 +1,4 @@
-package com.jzy.aicodeplatform.util;
+package com.jzy.aicodeplatform.utils;
 
 import org.springframework.beans.BeansException;
 import org.springframework.context.ApplicationContext;

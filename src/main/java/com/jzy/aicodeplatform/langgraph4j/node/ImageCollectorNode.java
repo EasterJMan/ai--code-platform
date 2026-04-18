@@ -8,7 +8,7 @@ import com.jzy.aicodeplatform.langgraph4j.tools.ImageSearchTool;
 import com.jzy.aicodeplatform.langgraph4j.tools.LogoGeneratorTool;
 import com.jzy.aicodeplatform.langgraph4j.tools.MermaidDiagramTool;
 import com.jzy.aicodeplatform.langgraph4j.tools.UndrawIllustrationTool;
-import com.jzy.aicodeplatform.util.SpringContextUtil;
+import com.jzy.aicodeplatform.utils.SpringContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;

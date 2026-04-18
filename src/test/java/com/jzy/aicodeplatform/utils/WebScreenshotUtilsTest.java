@@ -1,9 +1,7 @@
-package com.jzy.aicodeplatform.util;
+package com.jzy.aicodeplatform.utils;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
-
-import static org.junit.jupiter.api.Assertions.*;
 
 class WebScreenshotUtilsTest {
 

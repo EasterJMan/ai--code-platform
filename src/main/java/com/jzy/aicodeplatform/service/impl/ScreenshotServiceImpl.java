@@ -7,7 +7,7 @@ import com.jzy.aicodeplatform.exception.ErrorCode;
 import com.jzy.aicodeplatform.exception.ThrowUtils;
 import com.jzy.aicodeplatform.manager.CosManager;
 import com.jzy.aicodeplatform.service.ScreenShotService;
-import com.jzy.aicodeplatform.util.WebScreenshotUtils;
+import com.jzy.aicodeplatform.utils.WebScreenshotUtils;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

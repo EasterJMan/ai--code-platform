@@ -2,10 +2,6 @@ package com.jzy.aicodeplatform.langgraph4j.tools;
 
 import cn.hutool.core.util.StrUtil;
 import com.alibaba.dashscope.aigc.imagegeneration.*;
-import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesis;
-import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisParam;
-import com.alibaba.dashscope.aigc.imagesynthesis.ImageSynthesisResult;
-import com.alibaba.dashscope.aigc.multimodalconversation.AudioResult;
 import com.jzy.aicodeplatform.langgraph4j.enums.ImageCategoryEnum;
 import com.jzy.aicodeplatform.langgraph4j.model.ImageResource;
 import dev.langchain4j.agent.tool.P;

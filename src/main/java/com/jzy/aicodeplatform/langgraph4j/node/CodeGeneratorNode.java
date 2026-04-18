@@ -5,7 +5,7 @@ import com.jzy.aicodeplatform.core.AiCodeGeneratorFacade;
 import com.jzy.aicodeplatform.langgraph4j.model.QualityResult;
 import com.jzy.aicodeplatform.langgraph4j.state.WorkflowContext;
 import com.jzy.aicodeplatform.model.enums.CodeGenTypeEnum;
-import com.jzy.aicodeplatform.util.SpringContextUtil;
+import com.jzy.aicodeplatform.utils.SpringContextUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.bsc.langgraph4j.action.AsyncNodeAction;
 import org.bsc.langgraph4j.prebuilt.MessagesState;
