@@ -26,18 +26,18 @@ public class FileWriteTool extends BaseTool {
 
     @Tool("写入文件到指定路径")
     public String writeFile(
-            @P("文件的相对路径") String filePath,
+            @P("文件的相对路径") String relativeFilePath,
             @P("要写入的完整文件正文（UTF-8）。工具调用 JSON 中须对引号、反斜杠、换行等按 JSON 规范正确转义") String content,
             @ToolMemoryId Long appId) {
         try {
-            if (StrUtil.isBlank(filePath) || StrUtil.isBlank(content) || appId == null) {
-                return "文件写入失败：参数不完整，filePath=" + filePath + ", appId=" + appId;
+            if (StrUtil.isBlank(relativeFilePath) || StrUtil.isBlank(content) || appId == null) {
+                return "文件写入失败：参数不完整，filePath=" + relativeFilePath + ", appId=" + appId;
             }
-            Path path = Paths.get(filePath);
+            Path path = Paths.get(relativeFilePath);
             if (!path.isAbsolute()) {
                 String projectDirName = "vue_project_" + appId;
                 Path projectRoot = Paths.get(AppConstant.CODE_OUTPUT_ROOT_DIR, projectDirName);
-                path = projectRoot.resolve(filePath);
+                path = projectRoot.resolve(relativeFilePath);
             }
             Path parent = path.getParent();
             if (parent != null) {
@@ -45,9 +45,9 @@ public class FileWriteTool extends BaseTool {
             }
             Files.write(path, content.getBytes(StandardCharsets.UTF_8), StandardOpenOption.CREATE, StandardOpenOption.TRUNCATE_EXISTING);
             log.info("文件写入成功 :{}", path.toAbsolutePath());
-            return "文件写入成功" + filePath;
+            return "文件写入成功" + relativeFilePath;
         } catch (IOException e) {
-            String result = "文件写入失败：" + filePath + ",错误:" + e.getMessage();
+            String result = "文件写入失败：" + relativeFilePath + ",错误:" + e.getMessage();
             log.error(result, e);
             return result;
         }
