@@ -65,6 +65,7 @@ public class FileWriteTool extends BaseTool {
 
     @Override
     public String generateToolExecutedResult(JSONObject arguments) {
+        log.info("写入文件：{}",arguments.toString());
         String relativeFilePath = arguments.getStr("relativeFilePath");
         String suffix = FileUtil.getSuffix(relativeFilePath);
         String content = arguments.getStr("content");

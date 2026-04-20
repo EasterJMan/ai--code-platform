@@ -23,6 +23,8 @@ import com.jzy.aicodeplatform.model.entity.User;
 import com.jzy.aicodeplatform.model.enums.CodeGenTypeEnum;
 import com.jzy.aicodeplatform.model.vo.AppVO;
 import com.jzy.aicodeplatform.model.vo.UserVO;
+import com.jzy.aicodeplatform.monitor.MonitorContext;
+import com.jzy.aicodeplatform.monitor.MonitorContextHolder;
 import com.jzy.aicodeplatform.service.AppService;
 import com.jzy.aicodeplatform.service.ChatHistoryService;
 import com.jzy.aicodeplatform.service.ScreenShotService;
@@ -181,10 +183,21 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
         }
         //保存用户消息
         chatHistoryService.addChatMessage(appId, userMessage, ChatHistoryMessageTypeEnum.USER.getValue(), loginUser.getId());
+        //设置prometheus监控上下文
+        MonitorContextHolder.setContext(
+                MonitorContext.builder()
+                        .appId(appId.toString())
+                        .userId(loginUser.getId().toString())
+                        .build()
+        );
         //调用ai生成代码
         Flux<String> codeStream = aiCodeGeneratorFacade.generateAndSaveCodeStream(userMessage, codeGenTypeEnum, appId);
-
-        return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum);
+        //收集AI响应内容并在完成后记录到对话历史
+        return streamHandlerExecutor.doExecute(codeStream, chatHistoryService, appId, loginUser, codeGenTypeEnum)
+                .doFinally(sinalType -> {
+                    //流结束时清理线程内容，无论成功/失败/取消
+                    MonitorContextHolder.clearContext();
+                });
     }
 
     @Override
