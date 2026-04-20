@@ -18,9 +18,6 @@ import java.util.List;
 @Data
 public class RoutingAiModelConfig {
 
-    @Resource
-    private AiModelMonitorListener aiModelMonitorListener;
-
 
     private String baseUrl;
 
@@ -50,7 +47,6 @@ public class RoutingAiModelConfig {
                 .temperature(temperature)
                 .logRequests(logRequests)
                 .logResponses(logResponses)
-                .listeners(List.of(aiModelMonitorListener))
                 .build();
     }
 }
