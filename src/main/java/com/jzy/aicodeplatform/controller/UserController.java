@@ -70,6 +70,17 @@ public class UserController {
         return ResultUtils.success(userService.getLoginUserVO(loginUser));
     }
 
+    /**
+     * 当前登录用户修改个人资料（昵称、头像、简介）
+     */
+    @PostMapping("/update/me")
+    public BaseResponse<LoginUserVO> updateMyProfile(@RequestBody UserSelfUpdateRequest userSelfUpdateRequest,
+                                                     HttpServletRequest request) {
+        ThrowUtils.throwIf(userSelfUpdateRequest == null, ErrorCode.PARAMS_ERROR);
+        LoginUserVO loginUserVO = userService.updateSelfProfile(request, userSelfUpdateRequest);
+        return ResultUtils.success(loginUserVO);
+    }
+
     @PostMapping("/logout")
     public BaseResponse<Boolean> userLogout(HttpServletRequest request) {
         ThrowUtils.throwIf(request == null, ErrorCode.PARAMS_ERROR);

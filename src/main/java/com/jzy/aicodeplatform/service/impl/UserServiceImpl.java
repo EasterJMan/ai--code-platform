@@ -5,7 +5,9 @@ import cn.hutool.core.collection.CollUtil;
 import cn.hutool.core.util.StrUtil;
 import com.jzy.aicodeplatform.exception.BusinessException;
 import com.jzy.aicodeplatform.exception.ErrorCode;
+import com.jzy.aicodeplatform.exception.ThrowUtils;
 import com.jzy.aicodeplatform.model.dto.user.UserQueryRequest;
+import com.jzy.aicodeplatform.model.dto.user.UserSelfUpdateRequest;
 import com.jzy.aicodeplatform.model.enums.UserRoleEnum;
 import com.jzy.aicodeplatform.model.vo.LoginUserVO;
 import com.jzy.aicodeplatform.model.vo.UserVO;
@@ -18,6 +20,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -183,6 +186,39 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User>  implements U
         // 盐值，混淆密码
         final String SALT = "yupi";
         return DigestUtils.md5DigestAsHex((SALT + userPassword).getBytes());
+    }
+
+    @Override
+    public LoginUserVO updateSelfProfile(HttpServletRequest request, UserSelfUpdateRequest userSelfUpdateRequest) {
+        ThrowUtils.throwIf(userSelfUpdateRequest == null, ErrorCode.PARAMS_ERROR, "请求参数为空");
+        User loginUser = getLoginUser(request);
+        boolean hasChange = false;
+        if (userSelfUpdateRequest.getUserName() != null) {
+            String name = userSelfUpdateRequest.getUserName().trim();
+            ThrowUtils.throwIf(StrUtil.isBlank(name), ErrorCode.PARAMS_ERROR, "昵称不能为空");
+            ThrowUtils.throwIf(name.length() > 32, ErrorCode.PARAMS_ERROR, "昵称长度不能超过 32 个字符");
+            loginUser.setUserName(name);
+            hasChange = true;
+        }
+        if (userSelfUpdateRequest.getUserAvatar() != null) {
+            String avatar = userSelfUpdateRequest.getUserAvatar().trim();
+            ThrowUtils.throwIf(avatar.length() > 512, ErrorCode.PARAMS_ERROR, "头像地址过长");
+            loginUser.setUserAvatar(avatar);
+            hasChange = true;
+        }
+        if (userSelfUpdateRequest.getUserProfile() != null) {
+            String profile = userSelfUpdateRequest.getUserProfile().trim();
+            ThrowUtils.throwIf(profile.length() > 500, ErrorCode.PARAMS_ERROR, "简介长度不能超过 500 个字符");
+            loginUser.setUserProfile(profile);
+            hasChange = true;
+        }
+        ThrowUtils.throwIf(!hasChange, ErrorCode.PARAMS_ERROR, "请至少选择一项资料进行修改");
+        loginUser.setEditTime(LocalDateTime.now());
+        boolean result = this.updateById(loginUser);
+        ThrowUtils.throwIf(!result, ErrorCode.OPERATION_ERROR);
+        User fresh = this.getById(loginUser.getId());
+        request.getSession().setAttribute(USER_LOGIN_STATE, fresh);
+        return getLoginUserVO(fresh);
     }
 
 }

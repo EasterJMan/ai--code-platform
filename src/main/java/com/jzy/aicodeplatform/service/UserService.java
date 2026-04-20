@@ -1,6 +1,7 @@
 package com.jzy.aicodeplatform.service;
 
 import com.jzy.aicodeplatform.model.dto.user.UserQueryRequest;
+import com.jzy.aicodeplatform.model.dto.user.UserSelfUpdateRequest;
 import com.jzy.aicodeplatform.model.vo.LoginUserVO;
 import com.jzy.aicodeplatform.model.vo.UserVO;
 import com.mybatisflex.core.query.QueryWrapper;
@@ -68,5 +69,9 @@ public interface UserService extends IService<User> {
 
     String getEncryptPassword(String userPassword);
 
+    /**
+     * 当前登录用户更新个人资料（昵称、头像、简介），并刷新 Session 中的用户信息
+     */
+    LoginUserVO updateSelfProfile(HttpServletRequest request, UserSelfUpdateRequest userSelfUpdateRequest);
 
 }

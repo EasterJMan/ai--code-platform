@@ -257,6 +257,13 @@ declare namespace API {
     checkPassword?: string
   }
 
+  /** 当前用户修改个人资料 */
+  type UserSelfUpdateRequest = {
+    userName?: string
+    userAvatar?: string
+    userProfile?: string
+  }
+
   type UserUpdateRequest = {
     id?: number
     userName?: string

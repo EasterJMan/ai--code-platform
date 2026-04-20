@@ -30,7 +30,11 @@
               </a-space>
               <template #overlay>
                 <a-menu>
-                  <a-menu-item @click="doLogout">
+                  <a-menu-item key="profile" @click="goProfile">
+                    <UserOutlined />
+                    修改信息
+                  </a-menu-item>
+                  <a-menu-item key="logout" @click="doLogout">
                     <LogoutOutlined />
                     退出登录
                   </a-menu-item>
@@ -53,7 +57,7 @@ import { useRouter } from 'vue-router'
 import { type MenuProps, message } from 'ant-design-vue'
 import { useLoginUserStore } from '@/stores/loginUser.ts'
 import { userLogout } from '@/api/userController.ts'
-import { LogoutOutlined, HomeOutlined } from '@ant-design/icons-vue'
+import { LogoutOutlined, HomeOutlined, UserOutlined } from '@ant-design/icons-vue'
 
 const loginUserStore = useLoginUserStore()
 const router = useRouter()
@@ -109,6 +113,10 @@ const handleMenuClick: MenuProps['onClick'] = (e) => {
   if (key.startsWith('/')) {
     router.push(key)
   }
+}
+
+const goProfile = () => {
+  router.push('/user/profile')
 }
 
 // 退出登录
