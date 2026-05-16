@@ -9,6 +9,7 @@ import com.jzy.aicodeplatform.ai.AiCodeGenTypeRoutingService;
 import com.jzy.aicodeplatform.ai.AiCodeGenTypeRoutingServiceFactory;
 import com.jzy.aicodeplatform.core.builder.VueProjectBuilder;
 import com.jzy.aicodeplatform.constant.AppConstant;
+import com.jzy.aicodeplatform.innerservice.InnerScreenshotService;
 import com.jzy.aicodeplatform.innerservice.InnerUserService;
 import com.jzy.aicodeplatform.model.dto.app.AppAddRequest;
 import com.jzy.aicodeplatform.model.enums.ChatHistoryMessageTypeEnum;
@@ -28,11 +29,11 @@ import com.jzy.aicodeplatform.monitor.MonitorContext;
 import com.jzy.aicodeplatform.monitor.MonitorContextHolder;
 import com.jzy.aicodeplatform.service.AppService;
 import com.jzy.aicodeplatform.service.ChatHistoryService;
-import com.jzy.aicodeplatform.service.ScreenShotService;
 import com.mybatisflex.core.query.QueryWrapper;
 import com.mybatisflex.spring.service.impl.ServiceImpl;
 import jakarta.annotation.Resource;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.dubbo.config.annotation.DubboReference;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
@@ -59,7 +60,7 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     @Value("${code.deploy-host:http://localhost}")
     private String deployHost;
 
-    @Resource
+    @DubboReference
     private InnerUserService userService;
 
     @Resource
@@ -74,8 +75,8 @@ public class AppServiceImpl extends ServiceImpl<AppMapper, App> implements AppSe
     @Resource
     private VueProjectBuilder vueProjectBuilder;
 
-    @Resource
-    private ScreenShotService screenShotService;
+    @DubboReference
+    private InnerScreenshotService screenShotService;
 
     @Resource
     private AiCodeGenTypeRoutingServiceFactory aiCodeGenTypeRoutingServiceFactory;

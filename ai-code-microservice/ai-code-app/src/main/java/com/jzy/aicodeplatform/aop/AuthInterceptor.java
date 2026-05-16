@@ -6,7 +6,6 @@ import com.jzy.aicodeplatform.exception.ErrorCode;
 import com.jzy.aicodeplatform.innerservice.InnerUserService;
 import com.jzy.aicodeplatform.model.entity.User;
 import com.jzy.aicodeplatform.model.enums.UserRoleEnum;
-import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -20,9 +19,6 @@ import org.springframework.web.context.request.ServletRequestAttributes;
 @Component
 public class AuthInterceptor {
 
-    @Resource
-    private InnerUserService userService;
-
     /**
      * 执行拦截
      *
@@ -35,7 +31,7 @@ public class AuthInterceptor {
         RequestAttributes requestAttributes = RequestContextHolder.currentRequestAttributes();
         HttpServletRequest request = ((ServletRequestAttributes) requestAttributes).getRequest();
         // 当前登录用户
-        User loginUser = userService.getLoginUser(request);
+        User loginUser = InnerUserService.getLoginUser(request);
         UserRoleEnum mustRoleEnum = UserRoleEnum.getEnumByValue(mustRole);
         // 不需要权限，放行
         if (mustRoleEnum == null) {
